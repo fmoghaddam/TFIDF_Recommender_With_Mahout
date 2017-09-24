@@ -1,0 +1,52 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+apply plugin: 'distribution'
+
+mainClassName = "com.rekloud.recommender.controller.Main"
+
+repositories {
+    jcenter()
+}
+
+applicationDefaultJvmArgs = ["-Xmx10g", "-d64", "-XX:+UseParallelGC", "-server"]
+
+dependencies {
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+	compile group: 'log4j', name: 'log4j', version: '1.2.17'
+    compile "com.sparkjava:spark-core:2.6.0"
+    testImplementation 'junit:junit:4.12'
+    
+    compile group: 'org.apache.mahout', name: 'mahout-math', version: '0.13.0'
+	compile group: 'org.apache.mahout', name: 'mahout-core', version: '0.9'
+	compile group: 'org.apache.mahout', name: 'mahout-examples', version: '0.13.0'
+	compile group: 'postgresql', name: 'postgresql', version: '9.1-901.jdbc4'
+	compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+	compile group: 'com.j256.ormlite', name: 'ormlite-jdbc', version: '5.0'
+	
+}
+
+applicationDistribution.from("src/main/resources/config.properties") {
+    into "bin"
+}
+
+applicationDistribution.from("src/main/resources/log4j.properties") {
+    into "bin"
+}
+
+jar {	
+    exclude('config.properties', 'log4j.properties')
+}
+
+startScripts {
+    classpath += files('bin')
+    doLast {
+        def windowsScriptFile = file getWindowsScript()
+        def unixScriptFile    = file getUnixScript()
+        windowsScriptFile.text = windowsScriptFile.text.replace('%APP_HOME%\\lib\\bin', '%APP_HOME%\\bin')
+        unixScriptFile.text    = unixScriptFile.text.replace('$APP_HOME/lib/bin', '$APP_HOME/bin')
+    }
+}
+
+sourceCompatibility = 1.8
+version = '1.0'
