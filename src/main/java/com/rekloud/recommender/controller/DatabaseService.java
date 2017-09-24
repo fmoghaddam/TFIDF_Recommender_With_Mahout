@@ -1,6 +1,8 @@
 package com.rekloud.recommender.controller;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
@@ -8,6 +10,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -21,8 +24,9 @@ import com.rekloud.recommender.util.Config;
 import com.rekloud.recommender.util.DateService;
 
 public class DatabaseService {
-	
+
 	private static Logger LOG = Logger.getLogger(DatabaseService.class.getCanonicalName());
+	private static final int NUMBER_OF_RECOMMENDATION = Config.getInt("NUMBER_OF_RECOMMENDATION", 5);
 
 	private static final PGSimpleDataSource dataSource;
 	private static final String DATABASE_HOST = Config.getString("DATABASE_HOST", "127.0.0.1");
@@ -32,7 +36,7 @@ public class DatabaseService {
 	private static final int DATABASE_PORT = Config.getInt("DATABASE_PORT", 5432);
 
 	private static final int DATE_BACK = Config.getInt("DATE_BACK", 1);
-	
+
 	private static final String DATABAE_URL = "jdbc:postgresql://"+DATABASE_HOST+":"+DATABASE_PORT+"/"+DATABASE_NAME;
 
 	private static Dao<Item, String> itemDao;
@@ -47,7 +51,7 @@ public class DatabaseService {
 		dataSource.setDatabaseName(DATABASE_NAME);
 		dataSource.setPortNumber(DATABASE_PORT);
 
-		//TODO: Duplicate. should be fixed
+		//TODO: Duplicate; should be fixed
 
 		try {
 			final ConnectionSource cs = new JdbcConnectionSource(DATABAE_URL);
@@ -83,44 +87,17 @@ public class DatabaseService {
 
 	public static FastByIDMap<String> readAllNews() throws SQLException {
 		final FastByIDMap<String> result = new FastByIDMap<>();
-		//		Statement stmt = null;
-		//		String query = "SELECT \"itemId\",content from item";
-		//		try {
-		//			stmt = dataSource.getConnection().createStatement();
-		//			ResultSet rs = stmt.executeQuery(query);
-		//			while (rs.next()) {
-		//				String coffeeName = rs.getString("content");
-		//				long id = rs.getLong("itemId");
-		//				result.put(id, coffeeName);
-		//			}
-		//		} catch (SQLException e) {
-		//			e.printStackTrace();
-		//		} finally {
-		//			if (stmt != null) {
-		//				stmt.close();
-		//			}
-		//		}
-		//		return result;
-
-		QueryBuilder<Item, String> queryBuilder = itemDao.queryBuilder();
+		final QueryBuilder<Item, String> queryBuilder = itemDao.queryBuilder();
 		final Where<Item, String> where = queryBuilder.where();
 		final SelectArg selectArg = new SelectArg();
 		where.ge("date", selectArg);
-		PreparedQuery<Item> preparedQuery = queryBuilder.prepare();
+		final PreparedQuery<Item> preparedQuery = queryBuilder.prepare();
 		selectArg.setValue(DateService.getDateBack(DATE_BACK));
 
 		final List<Item> allItemUserRate = itemDao.query(preparedQuery);
-		for(Item i:allItemUserRate) {
+		for(final Item i:allItemUserRate) {
 			result.put(i.getItemId(),i.getContent());
 		}
-//		for (final CloseableIterator<Item> iterator = itemDao.iterator(); iterator
-//				.hasNext();) {
-//			if(iterator.current().getDate().after(DateService.getDateBack(DATE_BACK))) {
-//				String content = iterator.current().getContent();
-//				long id = iterator.current().getItemId();
-//				result.put(id, content);
-//			}
-//		}
 		return result;
 	}
 
@@ -146,6 +123,34 @@ public class DatabaseService {
 
 	public static Dao<Rating, String> getRatingDao() {
 		return ratingDao;
+	}
+
+	public static List<Long> getPopularItems(long userID) {
+		final List<Long> result = new ArrayList<>();
+		
+		try {
+			List<Long> itemsUserRated = ratingDao.queryForEq("user_id",userID).stream().map(p->p.getItem_id()).collect(Collectors.toList());
+			final QueryBuilder<Rating, String> queryBuilder = ratingDao.queryBuilder();
+			queryBuilder.selectRaw("avg(preference) AS average,item_id");
+			queryBuilder.groupBy("item_id");
+			queryBuilder.orderByRaw("average DESC");
+
+			final GenericRawResults<String[]> allItemUserRate = ratingDao.queryRaw(queryBuilder.prepareStatementString());
+			final List<String[]> firstResult = allItemUserRate.getResults();
+
+			for(final String[] s:firstResult) {				
+				String split = s[1].split(", ")[0];
+				long itemId = Long.parseLong(split);
+				if(result.size()<NUMBER_OF_RECOMMENDATION && !itemsUserRated.contains(itemId)) {
+					result.add(itemId);
+				}else {
+					return result;
+				}
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 
 }

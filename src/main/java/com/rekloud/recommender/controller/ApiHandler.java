@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -29,11 +30,15 @@ public class ApiHandler {
 
 	public void startApis(final RecommendationService rs) {
 		get("/recom/:userId", (req, res) -> {
+			long now = System.currentTimeMillis();
 			final long userId = Long.parseLong(req.params(":userId"));
 			List<Long> recommend = rs.recommend(userId, NUMBER_OF_RECOMMENDATION);
+			
 			if (recommend.isEmpty()) {
+				LOG.warn("Using mst popular item algorithm");
 				recommend = rs.auxilaryRecommend(userId, NUMBER_OF_RECOMMENDATION);
 			}
+			System.err.println(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now));
 			LOG.info("Recommned item for user " + userId);
 			return recommend;
 

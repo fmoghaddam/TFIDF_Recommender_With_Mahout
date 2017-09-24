@@ -11,7 +11,6 @@ import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.model.jdbc.PostgreSQLJDBCDataModel;
 import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
-import org.apache.mahout.cf.taste.impl.recommender.ItemAverageRecommender;
 import org.apache.mahout.cf.taste.impl.similarity.CachingItemSimilarity;
 import org.apache.mahout.cf.taste.model.JDBCDataModel;
 import org.apache.mahout.cf.taste.recommender.IDRescorer;
@@ -23,14 +22,11 @@ import com.rekloud.recommender.util.Config;
 public class RecommendationService {
 
 	private static Logger LOG = Logger.getLogger(RecommendationService.class.getCanonicalName());
-	
 	private static final int SIMILARITY_CACHE_SIZE = Config.getInt("SIMILARITY_CACHE_SIZE", 10);
-
 	private final DataSource dataSource = DatabaseService.getDataSource();
 
 	private final ItemSimilarity similarity;
 	private final Recommender mainRecommender;
-	private final Recommender auxilaryRecommender;
 	private final JDBCDataModel model;
 	private final IDRescorer rescorer;
 
@@ -39,9 +35,8 @@ public class RecommendationService {
 		final FastByIDMap<String> news = DatabaseService.readAllNews();
 		model = new PostgreSQLJDBCDataModel(dataSource);
 		rescorer = new DateRescorer();
-		similarity = new CachingItemSimilarity(new TFIDFSimilarity(news),SIMILARITY_CACHE_SIZE);
+		similarity = new CachingItemSimilarity(new TFIDFSimilarity(news), SIMILARITY_CACHE_SIZE);
 		mainRecommender = new GenericItemBasedRecommender(model, similarity);
-		auxilaryRecommender = new ItemAverageRecommender(model);
 		LOG.info("RecommedationService is up");
 	}
 
@@ -55,7 +50,7 @@ public class RecommendationService {
 	
 	public List<Long> auxilaryRecommend(final long userID, final int numberOfRecommendation) throws TasteException {
 		try{
-			return auxilaryRecommender.recommend(userID, numberOfRecommendation,rescorer).stream().map(p->p.getItemID()).collect(Collectors.toList());
+			return DatabaseService.getPopularItems(userID);
 		}catch(Exception e) {
 			return Collections.<Long>emptyList();
 		}
