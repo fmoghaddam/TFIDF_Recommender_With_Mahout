@@ -30,13 +30,11 @@ public class ApiHandler {
 
 	public void startApis(final RecommendationService rs) {
 		get("/recom/:userId", (req, res) -> {
-			final long now = System.currentTimeMillis();
 			final long userId = Long.parseLong(req.params(":userId"));
 			List<Long> recommend = rs.recommend(userId, NUMBER_OF_RECOMMENDATION);
 			if (recommend.isEmpty()) {
 				recommend = rs.auxilaryRecommend(userId, NUMBER_OF_RECOMMENDATION);
 			}
-			System.err.println(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - now));
 			LOG.info("Recommned item for user " + userId);
 			return recommend;
 

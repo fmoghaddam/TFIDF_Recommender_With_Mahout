@@ -13,18 +13,18 @@ import org.apache.mahout.cf.taste.impl.model.jdbc.PostgreSQLJDBCDataModel;
 import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.ItemAverageRecommender;
 import org.apache.mahout.cf.taste.impl.similarity.CachingItemSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.GenericItemSimilarity;
-import org.apache.mahout.cf.taste.impl.similarity.PearsonCorrelationSimilarity;
 import org.apache.mahout.cf.taste.model.JDBCDataModel;
 import org.apache.mahout.cf.taste.recommender.IDRescorer;
 import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
 
+import com.rekloud.recommender.util.Config;
+
 public class RecommendationService {
 
 	private static Logger LOG = Logger.getLogger(RecommendationService.class.getCanonicalName());
 	
-	private static final int SIMILARITY_CACHE_SIZE = 1000000;
+	private static final int SIMILARITY_CACHE_SIZE = Config.getInt("SIMILARITY_CACHE_SIZE", 10);
 
 	private final DataSource dataSource = DatabaseService.getDataSource();
 
@@ -39,8 +39,7 @@ public class RecommendationService {
 		final FastByIDMap<String> news = DatabaseService.readAllNews();
 		model = new PostgreSQLJDBCDataModel(dataSource);
 		rescorer = new DateRescorer();
-		//similarity = new CachingItemSimilarity(new TFIDFSimilarity(news),SIMILARITY_CACHE_SIZE);
-		similarity = new CachingItemSimilarity(new PearsonCorrelationSimilarity(model),SIMILARITY_CACHE_SIZE);
+		similarity = new CachingItemSimilarity(new TFIDFSimilarity(news),SIMILARITY_CACHE_SIZE);
 		mainRecommender = new GenericItemBasedRecommender(model, similarity);
 		auxilaryRecommender = new ItemAverageRecommender(model);
 		LOG.info("RecommedationService is up");
