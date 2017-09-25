@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.model.jdbc.PostgreSQLJDBCDataModel;
+import org.apache.mahout.cf.taste.impl.recommender.CachingRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.SamplingCandidateItemsStrategy;
 import org.apache.mahout.cf.taste.model.JDBCDataModel;
@@ -43,7 +44,7 @@ public class RecommendationService {
 		final CandidateItemsStrategy candidateStrategy = new SamplingCandidateItemsStrategy(5,5);
 		final MostSimilarItemsCandidateItemsStrategy mostSimilarStrategy = new SamplingCandidateItemsStrategy(5,5);
 		
-		mainRecommender = new GenericItemBasedRecommender(model, similarity,candidateStrategy,mostSimilarStrategy);
+		mainRecommender = new CachingRecommender(new GenericItemBasedRecommender(model, similarity,candidateStrategy,mostSimilarStrategy));
 		LOG.info("RecommedationService is up");
 	}
 
