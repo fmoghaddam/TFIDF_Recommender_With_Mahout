@@ -11,9 +11,12 @@ import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.model.jdbc.PostgreSQLJDBCDataModel;
 import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
+import org.apache.mahout.cf.taste.impl.recommender.SamplingCandidateItemsStrategy;
 import org.apache.mahout.cf.taste.impl.similarity.CachingItemSimilarity;
 import org.apache.mahout.cf.taste.model.JDBCDataModel;
+import org.apache.mahout.cf.taste.recommender.CandidateItemsStrategy;
 import org.apache.mahout.cf.taste.recommender.IDRescorer;
+import org.apache.mahout.cf.taste.recommender.MostSimilarItemsCandidateItemsStrategy;
 import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
 
@@ -36,7 +39,11 @@ public class RecommendationService {
 		model = new PostgreSQLJDBCDataModel(dataSource);
 		rescorer = new DateRescorer();
 		similarity = new CachingItemSimilarity(new TFIDFSimilarity(news), SIMILARITY_CACHE_SIZE);
-		mainRecommender = new GenericItemBasedRecommender(model, similarity);//,new AllUnknownItemsCandidateItemsStrategy(),new AllUnknownItemsCandidateItemsStrategy());
+		
+		final CandidateItemsStrategy candidateStrategy = new SamplingCandidateItemsStrategy(5,5);
+		final MostSimilarItemsCandidateItemsStrategy mostSimilarStrategy = new SamplingCandidateItemsStrategy(5,5);
+		
+		mainRecommender = new GenericItemBasedRecommender(model, similarity,candidateStrategy,mostSimilarStrategy);
 		LOG.info("RecommedationService is up");
 	}
 
