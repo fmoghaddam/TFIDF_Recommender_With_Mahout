@@ -20,6 +20,9 @@ public class DateRescorer implements IDRescorer {
 	public boolean isFiltered(long id) {
 		try {
 			Item item = DatabaseService.getItemDao().queryForId(String.valueOf(id));
+			if(item==null) {
+				return true;
+			}
 			if(item.getDate().after(DateService.getDateBack(DATE_BACK))) {
 				return false;
 			}else {

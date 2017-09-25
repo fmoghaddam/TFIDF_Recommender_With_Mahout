@@ -36,7 +36,7 @@ public class RecommendationService {
 		model = new PostgreSQLJDBCDataModel(dataSource);
 		rescorer = new DateRescorer();
 		similarity = new CachingItemSimilarity(new TFIDFSimilarity(news), SIMILARITY_CACHE_SIZE);
-		mainRecommender = new GenericItemBasedRecommender(model, similarity);
+		mainRecommender = new GenericItemBasedRecommender(model, similarity);//,new AllUnknownItemsCandidateItemsStrategy(),new AllUnknownItemsCandidateItemsStrategy());
 		LOG.info("RecommedationService is up");
 	}
 
@@ -44,6 +44,7 @@ public class RecommendationService {
 		try{
 			return mainRecommender.recommend(userID, numberOfRecommendation,rescorer).stream().map(p->p.getItemID()).collect(Collectors.toList());
 		}catch(Exception e) {
+			LOG.error(e.getMessage());
 			return Collections.<Long>emptyList();
 		}
 	}
@@ -52,6 +53,7 @@ public class RecommendationService {
 		try{
 			return DatabaseService.getPopularItems(userID);
 		}catch(Exception e) {
+			LOG.error(e.getMessage());
 			return Collections.<Long>emptyList();
 		}
 	}

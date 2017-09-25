@@ -45,4 +45,8 @@ public class Item {
 		this.date = date;
 	}
 
+	@Override
+	public String toString() {
+		return "Item [itemId=" + itemId + ", content=" + content + ", date=" + date + "]";
+	}
 }

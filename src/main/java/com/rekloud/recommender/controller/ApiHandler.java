@@ -35,11 +35,11 @@ public class ApiHandler {
 			List<Long> recommend = rs.recommend(userId, NUMBER_OF_RECOMMENDATION);
 			
 			if (recommend.isEmpty()) {
-				LOG.warn("Using mst popular item algorithm");
+				LOG.warn("Using most popular item algorithm");
 				recommend = rs.auxilaryRecommend(userId, NUMBER_OF_RECOMMENDATION);
 			}
 			System.err.println(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()-now));
-			LOG.info("Recommned item for user " + userId);
+			LOG.info("Calling Recommned API for user " + userId + " from "+req.ip());
 			return recommend;
 
 		});
@@ -66,7 +66,7 @@ public class ApiHandler {
 					e.printStackTrace();
 				}
 				res.status(201);
-				LOG.info("Rating added " + rating);
+				LOG.info("Calling addRating API for " + rating + " from "+req.ip());
 				return "Rating added";
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
@@ -90,7 +90,7 @@ public class ApiHandler {
 				item.setItemId(Integer.parseInt(id));
 				DatabaseService.addItem(item);
 				res.status(201);
-				LOG.info("Item added " + item);
+				LOG.info("Calling addItem API for item " + item+ " from "+req.ip());
 				return "Item added";
 			} catch (ParseException e) {
 				LOG.error(e.getMessage());
