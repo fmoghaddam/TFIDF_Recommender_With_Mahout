@@ -12,7 +12,6 @@ import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
 import org.apache.mahout.cf.taste.impl.model.jdbc.PostgreSQLJDBCDataModel;
 import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
 import org.apache.mahout.cf.taste.impl.recommender.SamplingCandidateItemsStrategy;
-import org.apache.mahout.cf.taste.impl.similarity.CachingItemSimilarity;
 import org.apache.mahout.cf.taste.model.JDBCDataModel;
 import org.apache.mahout.cf.taste.recommender.CandidateItemsStrategy;
 import org.apache.mahout.cf.taste.recommender.IDRescorer;
@@ -20,6 +19,7 @@ import org.apache.mahout.cf.taste.recommender.MostSimilarItemsCandidateItemsStra
 import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
 
+import com.rekloud.recommender.util.CachingItemSimilarity;
 import com.rekloud.recommender.util.Config;
 
 public class RecommendationService {
